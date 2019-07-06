@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+
+{% load bootstrap_field from bootstrap4 %}
+{% load i18n %}
+{% load markdown from markdown %}
+{% load prices_i18n %}
+{% load price_range from price_ranges %}
+{% load staticfiles %}
+{% load get_thumbnail product_first_image from product_images %}
+{% load build_absolute_uri from urls %}
+{% load placeholder %}
+{% load get_object_properties from attributes %}
+
+{% load mathfilters %}
+{% load product_average_rating from rating %}
+{% load times from rating %}
+
+{% block title %}
+    {% if product.seo_title %}
+        {{ product.seo_title }}
+    {% else %}
+        {{ product.name }} - {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block meta_tags %}
+    <meta property="og:title" content="{{ product.seo_title|default:product.name }}">
+    <meta property="og:description" content="{{ product.seo_description|default:"" }}">
+    <meta name="description" content="{{ product.seo_description|default:"" }}">
+
+    {% build_absolute_uri request=request location=product.get_absolute_url as product_url %}
+    <meta property="og:url" content="{{ product_url }}">
+    <link rel="canonical" href="{{ product_url }}">
+
+    {% product_first_image product size="510x510" as product_image %}
+    {% if product_image %}
+        <meta property="og:image" content="{{ product_image }}"/>
+        <meta property="og:image:width" content="510">
+        <meta property="og:image:height" content="510">
+    {% else %}
+        <meta property="og:image" content="{% placeholder size=255 %}">
+    {% endif %}
+{% endblock meta_tags %}
+
+{% block breadcrumb %}
+    <div class="container-fluid" onmousemove="all_remove()">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'home' %}">
+                                {% trans "Home" context "Main navigation item" %}
+                            </a>
+                        </li>
+                        {% if product.category %}
+                            <li class="breadcrumb-item">
+                                <a href="{{ product.category.get_absolute_url }}">{{ product.category }}</a>
+                            </li>
+                        {% endif %}
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <a href="{{ product.get_absolute_url }}">{{ product }}</a>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    {% if not is_visible %}
+        <div class="alert alert-warning" role="alert">
+            {% blocktrans trimmed with date=product.available_on|date context "Product details text" %}
+                <strong>Warning!</strong>
+                You are previewing a product that will become visible on <strong>{{ date }}</strong>.
+            {% endblocktrans %}
+        </div>
+    {% endif %}
+    <!--    Main Container Start    -->
+    <div class="container-fluid" onmousemove="all_remove()">
+        <div class="row">
+            <script type="application/ld+json">{{ json_ld_product_data|safe }}</script>
+            <div class="col-lg-8 col-sm-8">
+                <div class="row">
+                    {% with images=product_images %}
+                        {% if images %}
+                            <div class="col-lg-3 col-sm-4">
+                                <div class="nav flex-column nav-pills single-product-tab" id="v-pills-tab"
+                                     role="tablist" aria-orientation="vertical">
+                                    {% for image in images %}
+                                        {% if images|length > 0 %}
+                                            <a class="nav-link {% if forloop.first %}active{% endif %}"
+                                               id="v-pills-product{{ image.pk }}-tab" data-toggle="pill"
+                                               href="#v-pills-product{{ image.pk }}" role="tab"
+                                               aria-controls="v-pills-product{{ image.pk }}"
+                                               aria-selected="true">
+                                                <img data-src="{% get_thumbnail image.image method="crop" size="510x510" %}"
+                                                     data-srcset="{% get_thumbnail image.image method="crop" size="510x510" %} 1x, {% get_thumbnail image.image method="crop" size="120x120" %} 2x"
+                                                     alt=""
+                                                     class="lazy img-fluid"
+                                                     src="{% static 'store_front/assets/images/placeholder-aadi-logo.png' %}">
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="col-lg-9 col-sm-8">
+                                <div class="tab-content single-product-tabContent" id="v-pills-tabContent">
+                                    {% for image in images %}
+                                        <div class="tab-pane fade {% if forloop.first %} show active{% endif %}"
+                                             id="v-pills-product{{ image.pk }}"
+                                             role="tabpanel" aria-labelledby="v-pills-product{{ image.pk }}-tab">
+                                            <img class="img-fluid zoom_image_id lazy"
+                                                 onmouseover="remove_zoom_content()"
+                                                 data-zoom-image="{% get_thumbnail image.image method="crop" size="1080x1080" %}"
+                                                 data-src="{% get_thumbnail image.image method="crop" size="540x540" %}"
+                                                 data-srcset="{% get_thumbnail image.image method="crop" size="540x540" %} 1x, {% get_thumbnail image.image method="crop" size="540x540" %} 2x"
+                                                 alt=""
+                                                 src="{% static 'store_front/assets/images/placeholder-aadi-logo.png' %}">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <img data-src="{% placeholder size=1080 %}"
+                                 data-srcset="{% placeholder size=1080 %} 1x, {% placeholder size=1080 %} 2x"
+                                 alt=""
+                                 class="tab-content single-product-tabContent">
+                        {% endif %}
+                    {% endwith %}
+
+                </div>
+            </div>
+            <!-- RIght Sidebar   -->
+            <div class="col-lg-4 col-sm-4">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="single-product-info">
+                            <div class="single-top-info">
+                                <h3>{{ product.name }}</h3>
+                                {##}
+                                {#                                    {% for attribute, value in product_attributes.items %}#}
+                                {#                                        {% if attribute|slugify == 'brands' %}#}
+                                {#                                            See all products of#}
+                                {#                                            <a href="{% url 'product:brand' value|slugify %}">#}
+                                {#                                                <strong class="text-info">{{ value }}</strong></a> -#}
+                                {#                                        {% endif %}#}
+                                {#                                    {% endfor %}#}
+                                See all products of
+                                <a href="{% url 'product:vendor' product.vendor_user.vendor_details.pk %}">
+                                    <strong class="text-info">{{ product.vendor_user.vendor_details.company_name }}</strong>
+                                </a>
+
+
+                                <h3>
+                                    <a class="" href="{% url 'buyer-dashboard:wishlist-add' product_id=product.pk %}">
+                                        <li class="list-inline-item"><i class="fa fa-heart"></i></li>
+                                    </a>
+                                </h3>
+
+
+                                {% if user.is_staff and product.vendor_user.email == user.email or user.is_superuser %}
+                                    <p>
+                                        <a href="{% url "dashboard:product-details" pk=product.pk %}">
+                                            {% trans "Edit in dashboard" context "Product details link text" %}
+                                        </a>
+                                    </p>
+                                {% endif %}
+                                <div class="rating">
+                                    <ul class="list-inline product-rating">
+                                        {% if product.review_ratings %}
+                                            {% product_average_rating product as rating %}
+                                            {% if rating > 0 %}
+                                                {% for i in rating|times %}
+                                                    <span><i class="fa fa-star"></i></span>
+                                                {% endfor %}
+                                                {% with rating|add:"-5" as gray %}
+                                                    {% with gray|abs as abs_gray %}
+                                                        {% for i in abs_gray|times %}
+                                                            <span><i class="rating-gray fa fa-star"></i></span>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                {% endwith %}
+                                            {% else %}
+                                                {% for i in 5|times %}
+                                                    <span><i class="rating-gray fa fa-star"></i></span>
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+
+                                <h4 class="price">
+                                    {% if availability.available %}
+                                        {% price_range availability.price_range %}
+
+                                        {% if availability.discount %}
+                                            <small class="product__info__price__undiscounted">
+                                                {{ availability.price_range_undiscounted.start.gross|amount:'html' }}
+                                            </small>
+                                        {% endif %}
+
+                                         <span class="total_price_with_addons_div hide">
+                                            <small class="all_selected_addon_prices"></small>
+                                            <br>
+                                            Total $<span class="total_price_with_addons"></span>
+                                         <br />
+                                        </span>
+
+                                        {% if availability.price_range_local_currency %}
+                                            <br>
+                                            <small class="text-info">
+                                                &asymp;
+                                                {{ availability.price_range_local_currency.start.gross|amount:'html' }}
+                                            </small>
+                                        {% endif %}
+                                        <br>
+                                        <span><i class="fa fa-check-square"></i>In Stock</span>
+                                    {% else %}
+                                        <div class="red">
+                                            <span><i class="fa fa-check-square"></i>Stock Finished</span>
+                                        </div>
+                                    {% endif %}
+                                </h4>
+                                {{ product.description|safe }}
+                            </div>
+                            <div class="single-mid-info">
+                                {% if is_visible and product.is_in_stock %}
+                                    {% block orderform %}
+                                        {% if show_variant_picker %}
+                                            {% csrf_token %}
+
+                                            {% if product.vendor_user.vendor_details.size_chart_pdf %}
+                                                <a href="{{ product.vendor_user.vendor_details.size_chart_pdf.url }}"
+                                                   target="_blank">
+                                                    View size chart
+                                                </a>
+                                            {% endif %}
+
+                                            <div id="variant-picker"
+                                                 data-variant-picker-data="{{ variant_picker_data }}"
+                                                 data-addon-price-data="{{ addon_price_dict }}"
+                                                 data-action="{% url 'product:add-to-cart' product_id=product.pk slug=product.get_slug %}"></div>
+
+                                            {# add addon prices #}
+                                            {#                                                {% include "product/_addon_prices.html" with product=product %}#}
+                                        {% else %}
+
+                                            <form id="product-form" role="form" class="product-form clearfix"
+                                                  method="post"
+                                                  action="{% url 'product:add-to-cart' product_id=product.pk slug=product.get_slug %}"
+                                                  novalidate>
+                                                {% csrf_token %}
+                                                {% bootstrap_field form.variant %}
+                                                <div class="product__info__quantity">
+                                                    {% bootstrap_field form.quantity %}
+                                                </div>
+                                                <div class="clearfix"></div>
+                                                {# add addon prices #}
+                                                {% include "product/_addon_prices.html" with product=product %}
+
+                                                <div class="form-group product__info__button">
+                                                    <button class="btn btn-dark">
+                                                        {% trans "Add to cart" context "Product details primary action" %}
+                                                    </button>
+                                                </div>
+
+
+                                            </form>
+                                        {% endif %}
+                                    {% endblock %}
+                                    <div class="product__info__form-error">
+                                        <small class="text-danger"></small>
+                                    </div>
+                                {% else %}
+                                    <p class="alert alert-danger">
+                                        {% blocktrans context "Product details text" %}This product is
+                                            <strong>out of stock</strong>.{% endblocktrans %}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <div class="single-bottom-info">
+                                <ul>
+                                    {% for attribute, value in product_attributes.items %}
+
+                                        {% if attribute|slugify == 'brands' %}
+                                            {# show vendors link, then brands link #}
+                                            <li><span>Vendor: </span>
+                                                <a href="{% url 'product:vendor' product.vendor_user.vendor_details.pk %}">
+                                                    <strong class="text-info">{{ product.vendor_user.vendor_details.company_name }}</strong>.
+                                                    See all products
+                                                    of {{ product.vendor_user.vendor_details.company_name }}. </a>
+                                            </li>
+
+                                            <li><span>Brand: </span>
+                                                <a href="{% url 'product:brand' value|slugify %}">
+                                                    <strong class="text-info">{{ value }}</strong>.
+                                                    See all products of {{ value }}. </a>
+                                            </li>
+                                        {% else %}
+                                            <li><span>{{ attribute }}: </span> {{ value }} </li>
+                                        {% endif %}
+
+                                    {% endfor %}
+                                    <li>
+                                        <span>Share :</span>
+                                        <a href="https://www.facebook.com/sharer/sharer.php?app_id=230959757798020&sdk=joey&u={{ request.build_absolute_uri }}&display=popup&ref=plugin&src=share_button"
+                                           onclick="return !window.open(this.href, 'Facebook', 'width=640,height=580')"><i
+                                                class="fab fa-facebook-square fa-2x"></i></a>
+                                        <a href="https://twitter.com/share?url={{ request.build_absolute_uri }}&display=popup&ref=plugin&src=share_button"
+                                           onclick="return !window.open(this.href, 'Twitter', 'width=640,height=580')"><i
+                                                class="fab fa-twitter-square fa-2x"></i></a>
+                                        <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}&display=popup&ref=plugin&src=share_button"
+                                           onclick="return !window.open(this.href, 'Linkedin', 'width=640,height=580')"><i
+                                                class="fab fa-linkedin fa-2x"></i></a>
+                                        <a href="https://plus.google.com/share?url={{ request.build_absolute_uri }}&display=popup&ref=plugin&src=share_button"
+                                           onclick="return !window.open(this.href, 'Google+', 'width=640,height=580')"><i
+                                                class="fab fa-google-plus-square fa-2x"></i></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <ul class="nav nav-tabs single-product-info-tab" id="single-product-info-tab">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="desc-tab" data-toggle="tab" href="#desc"
+                           role="tab">Description</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="info-tab" data-toggle="tab" href="#info" role="tab">Additional Info</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="review1-tab" data-toggle="tab" href="#review1" role="tab">Reviews
+                            ({{ reviews_ratings_count }})</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="single-product-info-tab">
+                    <div class="tab-pane fade show active" id="desc" role="tabpanel" aria-labelledby="desc-tab">
+                        {% if product.description %}
+                            {{ product.description|safe }}
+                        {% else %}
+                            No description found
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
+                        {% if product.specification %}
+                            {{ product.specification|safe }}
+                        {% else %}
+                            No informations found
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="review1" role="tabpanel" aria-labelledby="review1-tab">
+                        {#                        {% if is_orderd and request.user.is_authenticated %}#}
+                        {% if request.user.is_authenticated %}
+                            <h3>Give us your Feedback: </h3>
+                            {% include 'review_rating/review_rating_form.html' %}
+                            <br>
+                        {% endif %}
+                        {% if reviews_ratings_count > 0 %}
+                            <h3>Reviews: </h3>
+                            <br>
+                            {% include 'review_rating/review_rating_details.html' %}
+                        {% else %}
+                            <hr>
+                            <b><p>No review available yet.</p></b>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Row ENd -->
+
+    <div class="container-fluid carousels">
+        <div class="row mb20 ">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="heading">
+                            <h3>Products You may be interested in ...</h3>
+                            <div class="line"></div>
+                        </div>
+                        {% if trending_products %}
+                            <div class="row">
+                                <div class="owl-carousel owl-theme">
+                                    {% with products=trending_products %}
+                                        {% include "product/_items.html" %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb20">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="heading">
+                            <h3>Other Products From this brand...</h3>
+                            <div class="line"></div>
+                        </div>
+                        {% if other_products_from_this_vendor %}
+                            <div class="row">
+                                <div class="owl-carousel owl-theme">
+                                    {% with products=other_products_from_this_vendor %}
+                                        {% include "product/_items.html" %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="heading">
+                            <h3>Recommended Products...</h3>
+                            <div class="line"></div>
+                        </div>
+                        {% if recommended_products %}
+                            <div class="row">
+                                <div class="owl-carousel owl-theme">
+                                    {% with products=recommended_products %}
+                                        {% include "product/_items.html" %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var zoom_image = function () {
+            $(".zoom_image_id").elevateZoom({
+                zoomType: "inner",
+                cursor: "crosshair",
+                easing: true,
+            });
+
+        };
+
+        var all_remove = function () {
+            $('.zoomContainer').remove();
+            $('.zoomLens').remove();
+            $('.zoom_image_id').removeData('elevateZoom');
+        };
+
+        var remove_zoom_content = function () {
+            zoom_image();
+        };
+
+
+        // store product price and variant prices for recalculation
+        let productPrice = 0;
+        let addonPrices = {};
+        let variantPrices = JSON.parse('{{ variant_prices_dict|safe }}');
+        let priceSpan = $("#product_detail_price_tag_span");
+
+        // re calculate variant and addons prices after any change
+        function reCalculatePricing() {
+            // add product price
+            {#let priceSpan = $(".single-product-info .price").find(".currency");#}
+            {#$(priceSpan).parent().html(priceSpan);#}
+            {#priceSpan.text("$" + productPrice.toFixed(2).toString());#}
+
+            priceSpan.text('$' + productPrice.toFixed(2).toString());
+
+            if (_.isEmpty(addonPrices)) {
+                // hide addon price div
+                $(".total_price_with_addons_div").addClass("hide")
+            } else {
+                let addonsTotal = _.sum(_.values(addonPrices));
+                let totalPrice = addonsTotal + productPrice;
+
+                // set total price into html
+                $(".total_price_with_addons").text(totalPrice.toFixed(2).toString());
+
+                // set all selected addon prices into html
+                let _text = "";
+                _.forEach(addonPrices, function (value, key) {
+                    _text = _text + "+ $" + value.toString();
+                });
+
+                $(".all_selected_addon_prices").text(_text);
+
+                // show addon price div
+                $(".total_price_with_addons_div").removeClass("hide")
+            }
+        }
+
+        function changeAddonPrices() {
+            // remove previous addon prices
+            addonPrices = {};
+            // get all selected addons
+            let selectedAddons = $("#product_detail_addon_prices_select_form :input:checkbox:checked");
+            // add addon prices to addonPrices object
+            $(selectedAddons).each(function (index, option) {
+                let addon_price_id = $(option).data("addon-price-id");
+                let addon_price = $(option).data("addon-price");
+                addonPrices[addon_price_id] = parseFloat(addon_price);
+            });
+            // recalculate prices
+            reCalculatePricing();
+        }
+
+        function changeVariantPrice() {
+            // get price based on selected size
+            let currentSizePrice = variantPrices[$(this).text()];
+            // change productPrice variable with updated price
+            productPrice = currentSizePrice;
+            // recalculate prices
+            reCalculatePricing();
+        }
+
+        $(document).ready(function () {
+            // change product variant price and recalcuate prices on change size variant
+            $(".single-product-info").on("click", ".btn.btn-secondary.variant-picker__option", changeVariantPrice);
+            // recalculate price after add/remove addons
+            {#$(".product_addon_prices").change(changeAddonPrices);#}
+            $('.single-product-info').on('click', '.product_addon_prices', changeAddonPrices)
+        });
+
+
+        // change price on initial load
+        $(window).on("load", function () {
+            // get variant price
+            let currentSizePrice = variantPrices[$("#variant-picker").find("input:radio:checked").first().parent().text().trim()];
+            // store variant price into variable for recalculation
+            if (typeof currentSizePrice != "undefined") {
+                console.log("lulu")
+                productPrice = currentSizePrice
+            } else {
+                console.log("lala")
+                {#let initialPrice = $(".single-product-info .price").find(".currency").parent().text().substring(1)#}
+                productPrice = parseFloat('$' + priceSpan.text());
+            }
+            // price recalculate
+            reCalculatePricing()
+        })
+    </script>
+{% endblock %}
+
+

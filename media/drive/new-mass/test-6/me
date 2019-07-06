@@ -1,0 +1,23 @@
+ssh -i codenext_oname -p 10203 codenext@157.7.242.91
+
+neuralnetw0rk
+
+mysql -u root -p
+
+show databases;
+
+sudo chown codenext:codenext -R ./
+
+python3 manage.py runserver 157.7.242.91:8010
+
+
+sudo python3 -m venv knowel_web_env
+
+sudo chown codenext:codenext -r knowel_env
+
+
+nohup python3 manage.py runserver 0.0.0.0:8025 &
+
+ps aux | grep 8025
+
+kill -9 (sample ip)
