@@ -1,7 +1,0 @@
-Md, 10:18 PM
-Amazon EC2
-Command: ssh -i root -p 22 root@18.219.88.76
-Username: root
-Password: SadeqAWS
-MySQL: mysql -u root -h 127.0.0.1 -p
-MySQL password: 123123

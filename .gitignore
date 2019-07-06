@@ -2,5 +2,5 @@
 XDG_CACHE_HOME
 db.sqlite3
 __pycache__
-backend/venv
-backend/media/*
+venv
+media/*
