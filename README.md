@@ -30,7 +30,7 @@
 
 4. Goto backend(API) directory
     ```
-    cd screening-project/backend
+    cd mdrive-api
     ```
     
 5. Install Requirements using pip
