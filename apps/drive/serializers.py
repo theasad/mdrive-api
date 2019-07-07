@@ -63,26 +63,17 @@ class FileSerializer(serializers.ModelSerializer):
     # breadcrumb_folders = serializers.SerializerMethodField(read_only=True)
     name = serializers.CharField(read_only=True)
     size = serializers.SerializerMethodField(read_only=True)
+    file = serializers.FileField(required=True)
 
     class Meta:
         model = File
-        fields = ('id', 'folder',
-                  'created', 'icon', 'file', 'size', 'name')
+        fields = ('id',
+                  'created', 'folder', 'icon', 'file', 'size', 'name')
 
     def get_icon(self, obj):
         icon_link = get_file_icon(self.context['request'], obj.name)
         return icon_link
 
     def get_size(self, obj):
-        size_str = get_media_filesize(obj.file.name)
-        return size_str
-
-    # def get_breadcrumb_folders(self, obj):
-    #     current = FolderSerializer(obj.folder)
-    #     serializer = FolderSerializer(
-    #         obj.folder.get_parentfolders(), many=True)
-    #     response = {
-    #         'parents': serializer.data,
-    #         'active': current.data
-    #     }
-        # return response
+        size = get_media_filesize(obj.file.name)
+        return size

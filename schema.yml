@@ -1,0 +1,66 @@
+info:
+  description: ''
+  title: ''
+  version: ''
+openapi: 3.0.0
+paths:
+  /api/v1/drive/folders/:
+    get:
+      operationId: folders_list
+      tags:
+      - folders
+    post:
+      operationId: folders_create
+      tags:
+      - folders
+  /api/v1/drive/folders/{slug}/:
+    delete:
+      operationId: folders_delete
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - folders
+    get:
+      operationId: folders_read
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - folders
+    patch:
+      operationId: folders_partial_update
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - folders
+    put:
+      operationId: folders_update
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - folders
+servers:
+- url: ''

@@ -23,7 +23,7 @@ from rest_framework.documentation import include_docs_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path('api/v1/drive/', include('drive.urls')),
-    url(r'', include_docs_urls(title='My API title')),
+    url(r'', include_docs_urls(title='mDrive API')),
 ]
 
 
