@@ -51,11 +51,7 @@ class ChildFolderSerializer(serializers.ModelSerializer):
         current = FolderSerializer(obj)
         serializer = FolderSerializer(
             obj.get_parentfolders().order_by('id'), many=True)
-        response = {
-            'parents': serializer.data,
-            'active': current.data
-        }
-        return response
+        return {'parents': serializer.data, 'active': current.data}
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -71,9 +67,7 @@ class FileSerializer(serializers.ModelSerializer):
                   'created', 'folder', 'icon', 'file', 'size', 'name')
 
     def get_icon(self, obj):
-        icon_link = get_file_icon(self.context['request'], obj.name)
-        return icon_link
+        return get_file_icon(self.context['request'], obj.name)
 
     def get_size(self, obj):
-        size = get_media_filesize(obj.file.name)
-        return size
+        return get_media_filesize(obj.file.name)
